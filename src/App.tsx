@@ -5,6 +5,9 @@ import { Toaster } from 'react-hot-toast';
 import { supabase, type Room } from './lib/supabase';
 import { AuthModal } from './components/AuthModal';
 import { BookingModal } from './components/BookingModal';
+import axios from 'axios';
+
+
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,6 +20,7 @@ function App() {
   const { scrollY } = useScroll();
 
   useEffect(() => {
+    
     // Fetch rooms
     const fetchRooms = async () => {
       const { data, error } = await supabase
@@ -59,9 +63,26 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleBooking = (room: Room) => {
+  const handleBooking = async (room: Room) => {
     if (!user) {
       setIsAuthModalOpen(true);
+      // const response = await fetch('http://localhost:3000/send-booking-email', {  // Update the URL for your backend
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     booking_id: room.id,  // Or whatever booking information you need
+      //     user_email: user.email,  // Send the user's email to the backend
+      //     room_title: room.title,  // Send the room title as part of the email
+      //     check_in: room.check_in,  // Example of sending check-in info
+      //     check_out: room.check_out,  // Example of sending check-out info
+      //   }),
+      // });
+    
+      // if (response.ok) {
+      //   alert('Booking successful! Confirmation email sent.');
+      // } else {
+      //   console.error('Error sending booking email:', response.statusText);
+      // }
       return;
     }
     setSelectedRoom(room);
@@ -81,6 +102,39 @@ function App() {
     await supabase.auth.signOut();
     setUser(null);
   };
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const user = session.user;
+          
+          // Sync to custom users table
+          await supabase.from('users').upsert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata.full_name || '',
+            phone: user.phone || null,
+          });
+
+          // Trigger the backend to send email upon login
+          await fetch('https://backend123-jbvg.onrender.com/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email }),
+          })
+            .then((response) => response.json())
+            .then((data) => console.log('Email sent:', data))
+            .catch((error) => console.error('Error sending email:', error));
+
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">

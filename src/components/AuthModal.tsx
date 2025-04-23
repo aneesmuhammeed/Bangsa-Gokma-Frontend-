@@ -15,6 +15,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
     });
+
+
+    
     if (error) toast.error(error.message);
   };
 
