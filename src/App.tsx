@@ -96,6 +96,11 @@ function App() {
     } catch (error) {
       console.error('Error during Google sign-in:', error);
     }
+
+    // await fetch('https://backend123-jbvg.onrender.com/login', {
+    //   method: 'POST',
+    // })
+
   };
   
   const handleSignOut = async () => {
@@ -115,18 +120,14 @@ function App() {
             email: user.email,
             full_name: user.user_metadata.full_name || '',
             phone: user.phone || null,
+            created_at: new Date().toISOString(),
           });
 
           // Trigger the backend to send email upon login
           await fetch('https://backend123-jbvg.onrender.com/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: user.email }),
           })
-            .then((response) => response.json())
-            .then((data) => console.log('Email sent:', data))
-            .catch((error) => console.error('Error sending email:', error));
-
+          
         }
       }
     );

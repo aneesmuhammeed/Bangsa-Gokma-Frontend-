@@ -4,45 +4,45 @@ CREATE TABLE users (
   email text UNIQUE NOT NULL,
   full_name text,
   phone text,
-  created_at timestamptz DEFAULT now()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 );
 
 
 
-INSERT INTO users (id, email, full_name, phone)
-VALUES (gen_random_uuid(), 'testemail@gmail.com', 'Testy Test', '1234567890');
+-- INSERT INTO users (id, email, full_name, phone)
+-- VALUES (gen_random_uuid(), 'testemail@gmail.com', 'Testy Test', '1234567890');
 
--- TEMPORARY: Allow public access to all users (only for testing)
-CREATE POLICY "Allow public read of users"
-ON users
-FOR SELECT
-USING (true);
+-- -- TEMPORARY: Allow public access to all users (only for testing)
+-- CREATE POLICY "Allow public read of users"
+-- ON users
+-- FOR SELECT
+-- USING (true);
 
 
--- Enable http extension if not already
-create extension if not exists http;
+-- -- Enable http extension if not already
+-- create extension if not exists http;
 
--- Function to call your backend on user insert
-create or replace function notify_new_user()
-returns trigger as $$
-declare
-  payload json;
-begin
-  payload := json_build_object('user_id', NEW.id);
-  perform
-    http_post(
-      url := 'https://backend123-jbvg.onrender.com/login',
-      headers := json_build_object('Content-Type', 'application/json'),
-      body := payload
-    );
-  return NEW;
-end;
-$$ language plpgsql;
+-- -- Function to call your backend on user insert
+-- create or replace function notify_new_user()
+-- returns trigger as $$
+-- declare
+--   payload json;
+-- begin
+--   payload := json_build_object('user_id', NEW.id);
+--   perform
+--     http_post(
+--       url := 'https://backend123-jbvg.onrender.com/login',
+--       headers := json_build_object('Content-Type', 'application/json'),
+--       body := payload
+--     );
+--   return NEW;
+-- end;
+-- $$ language plpgsql;
 
--- Trigger on users table
-create trigger on_new_user
-after insert on users
-for each row execute function notify_new_user();
+-- -- Trigger on users table
+-- create trigger on_new_user
+-- after insert on users
+-- for each row execute function notify_new_user();
 
 
 
@@ -71,7 +71,7 @@ CREATE TABLE bookings (
 );
 
 -- ENABLE RLS FIRST
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLEABLE ROW LEVEL SECURITY;
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 
